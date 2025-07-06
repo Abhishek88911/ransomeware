@@ -9,3 +9,14 @@ python3 ransomware_sim.py
 # Run decryption
 python3 ransomware_sim.py
 # Enter key when prompted: Abhishek!234@#$
+
+
+android :
+pkg update && pkg upgrade
+pkg install python
+pkg install git
+pip install pycryptodome
+git clone 
+termux-setup-storage
+cd /storage/emulated/0/Download
+
