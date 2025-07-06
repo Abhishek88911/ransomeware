@@ -22,3 +22,11 @@ python Antivirus.py
 termux-setup-storage
 cd /storage/emulated/0/Download
 python Antivirus.py
+
+
+pkg update && pkg upgrade
+pkg install python
+python3 -m venv myenv
+source myenv/bin/activate
+pip install pycryptodome
+termux-setup-storage  # To access your phone's storage
